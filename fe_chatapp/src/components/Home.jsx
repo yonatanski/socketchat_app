@@ -42,20 +42,20 @@ const Home = () => {
 //           const condtionalStyling= chatHistory && chatHistory?.map((list) =>  console.log("condtionalStyling", list))
 //  console.log("condtionalStyling", condtionalStyling)
 
-   const Message ={
-        text: "" ,// the content of the message
-        sender: "string", // the username of the person who sent the message
-        id: "string", // the socket we're sending the message from
-        timestamp: null // the number of ms elapsed from 01/01/1970
-      }
+//    const Message ={
+//         text: "" ,// the content of the message
+//         sender: "string", // the username of the person who sent the message
+//         id: "string", // the socket we're sending the message from
+//         timestamp: null // the number of ms elapsed from 01/01/1970
+//       }
    
- 
- 
- 
+
     useEffect(() =>{
+
         socket.on('connect', ()=>{
             console.log("connection established!")
          })
+
 
         socket.on("loggedin", ()=>{
             console.log("You're correctly logged in now")
@@ -68,31 +68,51 @@ const Home = () => {
             fecthOnlineUsersList()
           
         })
+
         socket.on("disconnectedUser", () =>{
             console.log("Another client disconnected, refreshing the list...")
             fecthOnlineUsersList()
         })
 
-        socket.on("message", (Message)=>{
-            console.log("Another client disconnected, refreshing the list...")
-            setChatHistory((chatHistory) => [...chatHistory, Message])
-          
+        socket.on("message", (message)=>{
+            console.log("New message coming ayyyyyyyyyyyyyyyyyyyyyy---")
+            console.log("chatHistoryState", chatHistory)
+            console.log("incomingchatfromSocketIO", message)
+            // setChatHistory((curruentchatHistory) => [...curruentchatHistory, message])
+            
+
+              setChatHistory((prevArray) => prevArray.some(obj => obj === message) ? prevArray : [...prevArray, message]);
+
+
         })
     })
    
+    }, [])
 
 
-    },[])
 
     console.log(username)
     console.log(room)
     console.log(message)
 //-----------------------------
 
+const handleUsernameSubmit = (e) => {
+    e.preventDefault()
+    // we need to send the username to the server
+    // the username is safely stored in a 'username' state variable
+    // we'll EMIT AN EVENT to the server!
+    socket.emit("setUsername", {
+      // username: username
+      username, 
+      room, 
+    })
+        
+  }
+
 
 const fecthOnlineUsersList = async () =>{
     try{
-        let response = await fetch(ADDRESS +"/online-users");
+        let response = await fetch(process.env.REACT_APP_BE_URL);
                
          if(response.ok){
             console.log("type", response)
@@ -106,19 +126,7 @@ const fecthOnlineUsersList = async () =>{
           }
   }
 
-  const handleUsernameSubmit = (e) => {
-    e.preventDefault()
-    // we need to send the username to the server
-    // the username is safely stored in a 'username' state variable
-    // we'll EMIT AN EVENT to the server!
-    socket.emit("setUsername", {
-      // username: username
-      username, 
-      room, 
-    })
-        
-  }
-
+ 
   const handleMessageSubmit = (e) => {
     e.preventDefault()
 
@@ -131,8 +139,8 @@ const fecthOnlineUsersList = async () =>{
 
   
 
-  socket.emit("sendmessage", {message:messageToSend,room})
-  setChatHistory([...chatHistory,messageToSend]) //[hi, hello].map()
+  socket.emit("sendmessage", { message: messageToSend, room})
+  setChatHistory([...chatHistory, messageToSend]) //[hi, hello].map() spread
   console.log(chatHistory)
   setMessage("")
 
@@ -147,16 +155,10 @@ const fecthOnlineUsersList = async () =>{
     setRoom((room) => (room === "Blue" ? "Red" : "Blue"))
   }     
   
- 
 
-  const userLogo= <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
-  <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-</svg>
- 
- 
 
   return (
-    <Container  className="px-4 mt-3 border border-dark" >
+    <Container  className="px-4 mt-3  " >
         <Navbar className="bg-body-tertiary border border-primary rounded-4 ">
        
           <Navbar.Brand href="#home">
@@ -171,76 +173,51 @@ const fecthOnlineUsersList = async () =>{
           </Navbar.Brand>
   
       </Navbar>
-      <Row style={{ height: "95vh" }} className="px-4 mt-3 ">
+      <Row style={{ height: "100vh" }} className="px-4 mt-3 ">
         <Col md={9} className="d-flex flex-column justify-content-between mb-0 border border-dark">
           {/* MAIN VIEW COL */}
           {/* TOP SECTION: USERNAME INPUT FIELD */}
-          <Form onSubmit={handleUsernameSubmit}  className="d-flex mt-2">
-            {isLoggedIn?<Container fluid className="d-flex justify-content-between"><i class="bi bi-person font-weight-bold"> {username} </i> <i class="bi bi-house-door-fill ">{room =="Blue" ? "Blue":"Red"}</i></Container> :
+          <Form onSubmit={handleUsernameSubmit}  className="d-flex mt-2 mb-2 ">
+
+            {isLoggedIn?<Container fluid className="d-flex justify-content-between bg-info"><i class="bi bi-person font-weight-bold"> {username} </i> <i class="bi bi-house-door-fill ">{room =="Blue" ? "Blue":"Red"}</i></Container> :
             <>
             <Form.Control type="text" placeholder="Enter your username" value={username} onChange={(e)=>setUsername(e.target.value)} disabled={isLoggedIn}/>
             <Button className="ml-2"  onClick={handleToggleRoom} variant={room === "Blue" ? "primary" : "danger"} disabled={isLoggedIn} >
               Room
             </Button>
             </>
-}
+             }
           </Form>
+
           {/* MIDDLE SECTION: CHAT HISTORY */}
-          {/* <ListGroup>
-         { chatHistory && chatHistory.map((msg) => (
-          <ListGroup.Item key={msg.timeStamp} className="d-flex ">
-        
-            <strong className="d-inline-block" style={{ minWidth: 80 }}>
-            {msg.sender}
-            </strong>
          
-            <span className="ml-auto text-muted">{new Date(msg.timeStamp).toLocaleTimeString()}</span>
-           
-         
-      
-             <p>{msg.text}</p>
-          
-          </ListGroup.Item>
-            ))}
-          </ListGroup> */}
-
-          {/* <ChatListFiled chatHistory={chatHistory}/> */}
-
-
-          {/* ------------------------------------- test start---------------------*/}
-
           <ListGroup>
             {chatHistory.map((message) => (
-                    <ListGroup.Item key={message.timestamp} className={message.sender == username? 'd-flex bg-danger' :'d-flex bg-primary'}>
-                   
-                <div>
-                    <Image  alt="Remy Sharp" className="rounded-circle"  src={`https://ui-avatars.com/api/?name=${message.sender}&length=1`} />
-                <strong className="d-inline-block" style={{ minWidth:50 }}>
+              <ListGroup.Item key={message.id} className={message.sender === username? 'd-flex bg-dark mb-1 text-white' :'d-flex bg-success text-white mb-2'}>
+                 <Image width="25" height="25" alt="Remy Sharp" className="rounded-circle"  src={`https://ui-avatars.com/api/?name=${message.sender}&length=1`} />
+                <strong className="d-inline-block" style={{ minWidth: 80 }}>
                   {message.sender}
                 </strong>
-                </div>
-                <div>
-                <p>{message.text}</p>
-                </div>
-           
-                <span className="ml-auto text-muted">{new Date(message.timestamp).toLocaleTimeString()}</span>
+                {message.text}
+                <span className="ml-auto text-white">{new Date(message.timestamp).toLocaleTimeString()}</span>
               </ListGroup.Item>
             ))}
           </ListGroup>
 
-
-                    {/* ------------------------------------- test end---------------------*/}
-
+    
           {/* BOTTOM SECTION: NEW MESSAGE INPUT FIELD */}
-          <div class="position-static">
+
+
+          <div class="mt-3">
           <Form onSubmit={handleMessageSubmit} className="px-4 mb-4 rounded-3 text-white" >
-            <Form.Control className="px-4 mb-4 rounded-5 bg-dark text-light" type="text" placeholder="Enter your message" value={message} onChange={(e)=>setMessage(e.target.value)}  />
+            <Form.Control className="px-4 mb-4 rounded-5 bg-dark text-light" type="text" placeholder="Enter your message" value={message} onChange={(e)=>setMessage(e.target.value)} disabled={!isLoggedIn} />
           </Form>
           </div>
         </Col>
-        <Col md={3} className="bg-secondary mb-5 pl-2 ">
+
+        <Col md={3} className="bg-dark mb-5 pl-2 ">
           {/* ONLINE USERS COL */}
-          <h5>{room} ChatRoom Connected Userlist</h5>
+          <strong className="ml-auto text-white">{room} ChatRoom Connected Userlist</strong>
           
           <DefaultExample onlineUsersList={onlineUsersList}/>
           
