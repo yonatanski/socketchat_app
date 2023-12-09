@@ -25,7 +25,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 
-const ADDRESS = "http://localhost:3030"
+const ADDRESS = process.env.REACT_APP_BASE_URL||process.env.REACT_APP_PR0_URL
 const socket = io(ADDRESS, { transports: ["websocket"] })
 
 const Home = () => {
@@ -112,7 +112,7 @@ const handleUsernameSubmit = (e) => {
 
 const fecthOnlineUsersList = async () =>{
     try{
-        let response = await fetch(process.env.REACT_APP_BE_URL);
+        let response = await fetch(process.env.REACT_APP_API_PRO_URL);
                
          if(response.ok){
             console.log("type", response)
