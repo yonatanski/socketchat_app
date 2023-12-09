@@ -25,7 +25,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 
-const ADDRESS = process.env.REACT_APP_BASE_URL||process.env.REACT_APP_PR0_URL
+const ADDRESS = process.env.REACT_APP_PR0_URL
 const socket = io(ADDRESS, { transports: ["websocket"] })
 
 const Home = () => {
